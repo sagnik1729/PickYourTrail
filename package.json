@@ -1,0 +1,12 @@
+{
+  "name": "pickyourtrail",
+  "version": "1.0.0",
+  "description": "tour and travel website",
+  "license": "ISC",
+  "author": "sagnik banerjee",
+  "type": "commonjs",
+  "main": "app.js",
+  "scripts": {
+    "start:dev": "nodemon app.js"
+  }
+}
