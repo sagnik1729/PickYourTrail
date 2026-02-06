@@ -1,6 +1,6 @@
 
 const Tour = require("../models/tourModel");
-
+const APIFeatures = require("../utils/apiFeatures");
 
 
 
@@ -39,7 +39,6 @@ exports.topCheapTours = (req, res, next) => {
 //-----------------------------------------------
 
 
-
 //GET TOURS
 exports.getAllTours = async (req, res) => {
     try {
@@ -52,89 +51,18 @@ exports.getAllTours = async (req, res) => {
         console.log("fullQuery", fullQuery);
 
 
-        //NORMAL METHOD
-        // const tours = await Tour.find(req.query);
-        //MONGOOSE METHOD
-        // const tours = await Tour.find().where('duration').gt(5).where('difficulty').equals('easy');
 
-        //------------------------------------------------------------------------------------------------------------------------
-        //BUILD THE QUERY
-        //------------------------------------------------------------------------------------------------------------------------
-        //FILTERING
-
-        //as filtering obj can have 'page' or 'sort', we can't use .find() method
-        //shalow copy of req.query
-        let queryObj = { ...fullQuery };
-        const excludedFields = ['page', 'sort', 'limit', 'fields'];
-        excludedFields.forEach(el => delete queryObj[el]);
-
-        //------------------------------------------------------------------------
-        //ADVANCE FILTERING
-
-        // duration[gte] = 5
-        //         ↓
-        // { duration: { gte: "5" } } 
-        //this is happen after we extend the query object
-        // by the line "app.set('query parser', 'extended');" in app.js
-
-        //{duration: {$gte: '5'},difficulty: 'easy' }
-        let queryStr = JSON.stringify(queryObj);
-        queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, match => `$${match}`)
-        //this will replace the gte, gt, lte, lt with $gte, $gt, $lte, $lt
-
-        queryObj = JSON.parse(queryStr);
-        //------------------------------------------------------------------------        
-        //FINAL QUERY OBJ
-
-        console.log("final query", queryObj);
-
-        let query = Tour.find(queryObj);
-        //we can't await the query, as it will return the query object; so we can't use pagination, sorting, etc later
-        //------------------------------------------------------------------------------------------------------------------------
-
-        //SORTING
-        if (fullQuery.sort && fullQuery.sort.trim() !== '') {
-            //sort('price ratingAverage') //so we need to split this
-            const sortBy = fullQuery.sort.split(',').join(' ')
-            console.log("sortBy", sortBy);
-            query = query.sort(sortBy);
-        } else {
-            query = query.sort('-createdAt');
-        }
-        //----------------------------------------------------------------------------------------------------------------
-        //FIELD LIMITING
-        if (fullQuery.fields) {
-            const fields = fullQuery.fields.split(',').join(' ');
-            console.log("fields", fields);
-            query = query.select(fields);
-        }
-        // else {
-        //     query = query.select('-__v'); //to hide the __v field
-        // }
-
-
-
-        //------------------------------------------------------------------------------------------------------------------------  
-        //PAGINATION
-        const page = fullQuery.page * 1 || 1;
-        const limit = fullQuery.limit * 1 || 100;
-        const skip = (page - 1) * limit;
-        query = query.skip(skip).limit(limit);
-
-        if (fullQuery.page) {
-            const numTours = await Tour.countDocuments(queryObj);
-            console.log("numTours", numTours);
-            if (skip >= numTours) {
-                throw new Error("This page does not exist");
-            }
-        }
-
-
-
+        //----------------------------------------------------------------------------------------------------------------  
+        //API FEATURES
+        const features = new APIFeatures(Tour.find(), fullQuery)
+            .filter()
+            .sort()
+            .limitFields()
+            .paginate();
         //------------------------------------------------------------------------------------------------------------------------  
         // query.sort().select().skip().limit(); -> so we can chain methods
         //EXECUTE THE QUERY
-        const tours = await query;
+        const tours = await features.query;
         // const tours = await Tour.find(); //to get all the tours
         res.status(200).json({
             status: "Success",
@@ -147,7 +75,8 @@ exports.getAllTours = async (req, res) => {
     } catch (err) {
         res.status(404).json({
             status: "Fail",
-            message: err.message
+            message: err.message,
+            stack: err.stack
         })
     }
 }
