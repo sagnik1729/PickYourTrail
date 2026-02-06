@@ -2,11 +2,12 @@
 const app = require("./app");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
-
+const Tour = require("./models/tourModel");
 //--------------------------------------------------------------------------------------------------
 //INITIALIZATION
 
 dotenv.config({ path: './config.env' });//to load the config.env file and set the environment variables
+
 
 
 //CONNECT WITH DATABASE
@@ -19,11 +20,24 @@ mongoose.connect(DB)
     .catch(err => console.error("DB connection failed:", err));
 
 
+//----------------------------------------------------------------------------------------------
 
-
-
-
-
+//TEST MONGO DB
+// const testTour = new Tour({
+//     name: "The Forest Hikers",
+//     duration: 7,
+//     maxGroupSize: 4,
+//     difficulty: "easy",
+//     ratingsAverage: 4.5,
+//     ratingsQuantity: 10,
+//     price: 299,
+//     priceDiscount: 200,
+//     summary: "Breathtaking hike through the Canadian Banff National Park"
+// })
+// testTour
+//     .save()
+//     .then(doc => console.log(doc))
+//     .catch(err => console.error(err));
 
 
 
@@ -38,3 +52,4 @@ app.listen(PORT, () => {
 
 });
 // git add config.env controllers public routes server.js app.js package.json
+// git push -u origin main

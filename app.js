@@ -11,9 +11,12 @@ const morgan = require("morgan");
 const app = express();
 
 
-
 //----------------------------------------------------------------------------------------------
 //MIDDLEWAREs
+
+//this will allow the use of query parameters
+app.set('query parser', 'extended');
+
 
 //json parser
 app.use(express.json());
