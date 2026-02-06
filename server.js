@@ -52,4 +52,5 @@ app.listen(PORT, () => {
 
 });
 // git add config.env controllers public routes server.js app.js package.json
+// git commit -m "initial commit"
 // git push -u origin main
