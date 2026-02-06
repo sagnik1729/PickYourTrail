@@ -7,13 +7,50 @@ const Tour = require("../models/tourModel");
 //-----------------------------------------------
 //MIDDLEWARE functions
 
+//TOP 5 CHEAP TOURS
+exports.topCheapTours = (req, res, next) => {
+
+    // req.query.limit = '5';
+    // req.query.sort = '-ratingsAverage,price';
+    // req.query.fields = 'name,price,ratingsAverage,summary,difficulty';
+    //NOT WORK as req.query no longer being mutable in express v5++
+
+
+    //one way, USE URLSearchParams
+    // const query = new URLSearchParams(req.query);
+    // query.set('limit', '5');
+    // query.set('sort', '-ratingsAverage,price');
+    // query.set('fields', 'name,price,ratingsAverage,summary,difficulty');
+    // req.url = `${req.path}?${query.toString()}`;
+    // console.log(req.url);
+
+    //another way, use req.customQuery
+    req.customQuery = {
+        sort: '-ratingsAverage,price',
+        limit: 5,
+        fields: 'name,price,ratingsAverage,summary,difficulty'
+    }
+
+    console.log(req.customQuery);
+    next();
+}
+
 
 //-----------------------------------------------
+
+
+
 //GET TOURS
 exports.getAllTours = async (req, res) => {
     try {
+
         console.log("req.query", req.query); //to get the query parameters
         //{duration: '5',difficulty: 'easy',maxGroupSize: '4' }
+
+        //CHANGE THE QUERY
+        const fullQuery = { ...req.query, ...(req.customQuery || {}) };
+        console.log("fullQuery", fullQuery);
+
 
         //NORMAL METHOD
         // const tours = await Tour.find(req.query);
@@ -27,7 +64,7 @@ exports.getAllTours = async (req, res) => {
 
         //as filtering obj can have 'page' or 'sort', we can't use .find() method
         //shalow copy of req.query
-        let queryObj = { ...req.query };
+        let queryObj = { ...fullQuery };
         const excludedFields = ['page', 'sort', 'limit', 'fields'];
         excludedFields.forEach(el => delete queryObj[el]);
 
@@ -56,9 +93,9 @@ exports.getAllTours = async (req, res) => {
         //------------------------------------------------------------------------------------------------------------------------
 
         //SORTING
-        if (req.query.sort) {
+        if (fullQuery.sort && fullQuery.sort.trim() !== '') {
             //sort('price ratingAverage') //so we need to split this
-            const sortBy = req.query.sort.split(',').join(' ')
+            const sortBy = fullQuery.sort.split(',').join(' ')
             console.log("sortBy", sortBy);
             query = query.sort(sortBy);
         } else {
@@ -66,8 +103,8 @@ exports.getAllTours = async (req, res) => {
         }
         //----------------------------------------------------------------------------------------------------------------
         //FIELD LIMITING
-        if (req.query.fields) {
-            const fields = req.query.fields.split(',').join(' ');
+        if (fullQuery.fields) {
+            const fields = fullQuery.fields.split(',').join(' ');
             console.log("fields", fields);
             query = query.select(fields);
         }
@@ -79,12 +116,12 @@ exports.getAllTours = async (req, res) => {
 
         //------------------------------------------------------------------------------------------------------------------------  
         //PAGINATION
-        const page = req.query.page * 1 || 1;
-        const limit = req.query.limit * 1 || 100;
+        const page = fullQuery.page * 1 || 1;
+        const limit = fullQuery.limit * 1 || 100;
         const skip = (page - 1) * limit;
         query = query.skip(skip).limit(limit);
 
-        if (req.query.page) {
+        if (fullQuery.page) {
             const numTours = await Tour.countDocuments(queryObj);
             console.log("numTours", numTours);
             if (skip >= numTours) {
@@ -209,3 +246,5 @@ exports.deleteTourbyId = async (req, res) => {
         })
     }
 }
+
+

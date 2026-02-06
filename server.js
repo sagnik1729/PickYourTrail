@@ -51,6 +51,6 @@ app.listen(PORT, () => {
     console.log(`we are currently in ${process.env.NODE_ENV} mode`);
 
 });
-// git add config.env controllers public routes server.js app.js package.json
+// git add config.env controllers public routes server.js app.js package.json models
 // git commit -m "initial commit"
 // git push -u origin main
