@@ -7,8 +7,8 @@ const APIFeatures = require("../utils/apiFeatures");
 //-----------------------------------------------
 //MIDDLEWARE functions
 
-//TOP 5 CHEAP TOURS
-exports.topCheapTours = (req, res, next) => {
+//TOP 5  TOURS
+exports.topTours = (req, res, next) => {
 
     // req.query.limit = '5';
     // req.query.sort = '-ratingsAverage,price';
@@ -102,7 +102,8 @@ exports.createTour = async (req, res) => {
     } catch (err) {//this will catch the validation errors, i.e. rejected promises
         res.status(400).json({
             status: "Fail",
-            message: err.message
+            message: err.message,
+            stack: err.stack
         })
     }
 
@@ -176,4 +177,114 @@ exports.deleteTourbyId = async (req, res) => {
     }
 }
 
+//-----------------------------------------------
+//GET TOUR STATS
+//aggregate method is used to perform complex queries
+exports.getTourStat = async (req, res) => {
+    try {
+        const stats = await Tour.aggregate([
+            {
+                $match: { ratingsAverage: { $gte: 4.5 } }
+                //this will match all the tours with rating greater than or equal to 4.5
+            },
+            {
+                $group: {
+                    // _id: null, //null mean it will not group by any field
+                    _id: { $toUpper: "$difficulty" },
+                    numTours: { $sum: 1 },
+                    avgRating: { $avg: "$ratingsAverage" },
+                    numRatings: { $sum: "$ratingsQuantity" },
+                    avgPrice: { $avg: "$price" },
+                    minPrice: { $min: "$price" },
+                    maxPrice: { $max: "$price" },
 
+                }
+            },
+            {
+                $sort: { avgPrice: 1 }
+            },
+            // {
+            //     $match: { _id: { $ne: "EASY" } }
+            //     //after grouping, we will match all the non-easy tours
+            // }
+        ])
+
+        res.status(200).json({
+            status: "Success",
+            requesTime: req.requestTime,
+            data: {
+                stats
+            }
+        })
+    } catch (err) {
+        res.status(404).json({
+            status: "Fail",
+            message: err.message
+        })
+    }
+}
+
+//--------------------------------------------------------------
+
+//GET MONTHLY PLAN
+exports.getMonthlyPlan = async (req, res) => {
+    try {
+        const year = req.params.year * 1;
+
+        const monthlyPlan = await Tour.aggregate([
+            {
+                $unwind: "$startDates"
+                //unwind will break down the array into multiple documents, and then each document will be processed separately
+            },
+            {
+                $match: {
+                    startDates: {
+                        $gte: new Date(`${year}-01-01`),
+                        $lte: new Date(`${year}-12-31`)
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: { $month: "$startDates" },
+                    numTour: { $sum: 1 },
+                    tours: { $push: "$name" }
+                }
+            },
+            {
+                $addFields: {
+                    month: "$_id", //this will add a new field called month with the value of _id
+
+                }
+            },
+            {
+                $project: {
+                    _id: 0, //this will remove the _id field
+                }
+            },
+            {
+                $sort: {
+                    numTour: -1
+                }
+            },
+            {
+                $limit: 6
+            },
+
+
+        ])
+
+        res.status(200).json({
+            status: "Success",
+            requesTime: req.requestTime,
+            data: {
+                monthlyPlan
+            }
+        })
+    } catch (err) {
+        res.status(404).json({
+            status: "Fail",
+            message: err.message
+        })
+    }
+}
