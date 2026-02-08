@@ -15,6 +15,7 @@ const tourRouter = express.Router();
 
 
 tourRouter.route("/")
+    // .get(catchAsync(getAllTours))//we can use catchAsync here also
     .get(getAllTours)
     .post(createTour)
 

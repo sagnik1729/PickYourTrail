@@ -1,6 +1,9 @@
 // console.log("this is for testing")
 const express = require("express");
 const router = require("./routes/indexRouter");
+const AppError = require("./utils/appError");
+const globalErrorHandler = require("./controllers/errorController");
+
 const morgan = require("morgan");
 
 
@@ -48,28 +51,26 @@ app.use((req, res, next) => {
 //--------------------------------------------------------------------------------------------------
 //ROUTES
 
-app.route("/test")
-    .get((req, res) => {
-        // res.status(200).send("hello world");
-        res.status(200).json({
-            messege: "hello world"
-        })
-    })
-    .post((req, res) => {
-
-        res.status(200).json({
-            messege: "success",
-            data: req.body
-        })
-    })
-
-
-
 app.use("/api/v1", router);
 
+//----------------------------------------------------------------------------------------------
+// ERROR HANDLERS
+
+app.use((req, res, next) => {
+    // const err = new Error(`can't find ${req.originalUrl} on this server`);
+    // err.statusCode = 404;
+    // err.status = "fail";
+    // next(err);
+    //if any argument pass in next(), the next middleware will not be called, straight to error handler
+
+    next(new AppError(`can't find ${req.originalUrl} on this server`, 404));
+    //this helps to set err.message, err.statusCode; 
+
+})
 
 
-
+//this is a global error handler
+app.use(globalErrorHandler)
 
 //--------------------------------------------------------------------------------------------------
 

@@ -45,7 +45,7 @@ const tourSchema = new mongoose.Schema({
     priceDiscount: {
         type: Number,
         validate: {
-            function(val) {
+            validator: function (val) {
                 return val < this.price //100<200 -> this will true
                 //the this refers to the current document, only access in creating new document, not in update
             },
@@ -112,7 +112,7 @@ tourSchema.pre("save", function () { //this triggered before the document is sav
 })
 
 tourSchema.post("save", function (doc) {
-    console.log(doc.slug);//doc is the current document, which is just saved
+    // console.log(doc.slug);//doc is the current document, which is just saved
 
 })
 
@@ -125,11 +125,11 @@ tourSchema.pre(/^find/, function () { //this triggered before the query is execu
         startDates: { $gte: new Date() }
     });
     // this.find({ duartionInWeeks: { $gte: 0 } }) //not work to filter by a virtual property in your query middleware
-    this.start = Date.now();
+    // this.start = Date.now();
 })
 
 tourSchema.post(/^find/, function (docs) {
-    console.log(`Query took ${Date.now() - this.start} milliseconds`);
+    // console.log(`Query took ${Date.now() - this.start} milliseconds`);
 })
 
 
