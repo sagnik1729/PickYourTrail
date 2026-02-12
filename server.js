@@ -3,7 +3,7 @@
 process.on("uncaughtException", err => {
     // errors occour in syncronous code, but not handled anywhere
     console.log("UNCAUGHT EXCEPTION! 💥 Shutting down...");
-    console.log(err.name, err.message);
+    console.log(err.name, err.message, err.stack);
 
     process.exit(1);
 
@@ -42,6 +42,8 @@ mongoose.connect(DB)
 
 
 
+
+
 //--------------------------------------------------------------------------------------------------
 //SERVER
 // console.log(app.get("env"));
@@ -59,7 +61,7 @@ process.on("unhandledRejection", err => {
     //unhandled promise rejection; if promise is rejected outside the express app
     //eg-> database connection error, network error,
     console.log("UNHANDLED REJECTION! 💥 Shutting down...");
-    console.log(err.name, err.message);
+    console.log(err.name, err.message, err.stack);
     server.close(() => {
         process.exit(1);
     });

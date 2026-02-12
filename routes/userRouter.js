@@ -1,8 +1,9 @@
 const express = require("express");
 
 
-const { getAllUsers, createUser, getUserbyId, updateUserbyId, deleteUserbyId } = require("../controllers/userController");
-
+const { getAllUsers, createUser, getUserbyId, getUserbyUserName, updateUserbyId, deleteUserbyId } = require("../controllers/userController");
+const { getMe, updateMe, deleteMe } = require("../controllers/userController");
+const { signUp, logIn, protect, restrictTo, forgetPassword, resetPassword, updatePassword } = require('./../controllers/authController');
 
 //-----------------------------------------------
 const userRouter = express.Router();
@@ -10,30 +11,45 @@ const userRouter = express.Router();
 
 //MIDDLEWAREs
 
-//param middleware
-userRouter.param('id', (req, res, next, val) => {
-    //this is only applied if the route is '/users/:id'
-    console.log(`user id is: ${val}`);
-    next();
-})
+
 
 
 
 
 
 //-----------------------------------------------
-
 //ROUTES
+
+userRouter.post('/signup', signUp)
+userRouter.post('/login', logIn)
+
+userRouter.post('/forgotPassword', forgetPassword)
+userRouter.patch('/resetPassword/:token', resetPassword)
+
+// below all are protected route
+userRouter.use(protect)
+
+userRouter.get('/user/:username', getUserbyUserName)
+
+userRouter.get('/me', getMe)
+userRouter.patch('/updateMe', updateMe)//only name, email, username can be updated   
+userRouter.delete('/deleteMe', deleteMe)
+
+userRouter.patch('/updatePassword', updatePassword)
+
+
+
 userRouter.route("/")
-    .get(getAllUsers)
-    .post(createUser)
+    .get(restrictTo('lead-guide', 'guide', 'admin'), getAllUsers)
+    .post(restrictTo('admin'), createUser)
 
 
-
+userRouter.use(restrictTo('lead-guide', 'admin'))
 userRouter.route("/:id")
     .get(getUserbyId)
     .patch(updateUserbyId)
     .delete(deleteUserbyId)
+
 
 
 

@@ -20,6 +20,12 @@ const handleValidationErrorDB = (err) => {
     const message = `Invalid input data.\n${errors.join('\n')}`;
     return new AppError(message, 400);
 }
+const handleJWTError = () => {
+    return new AppError("Invalid token. Please log in again!", 401);
+}
+const handleJWTExpiredError = () => {
+    return new AppError("Your token has expired! Please log in again.", 401);
+}
 
 
 //----------------------------------------------------  
@@ -48,7 +54,7 @@ const sendErrorProd = (err, req, res) => {
             message: err.message,
         })
     }
-    //programmer error
+    //programmer error (unknown error, non-operational error)
     //error like- server crash, database crash, etc
     else {
         // console.error("error", err);
@@ -69,7 +75,7 @@ module.exports = (err, req, res, next) => {
 
     if (process.env.NODE_ENV === 'development') {
         let error = err;
-        if (error.name === 'CastError' || error.code === 11000 || error.name === 'ValidationError') {
+        if (error.name === 'CastError' || error.code === 11000 || error.name === 'ValidationError' || error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
             error.statusCode = 400;
             error.status = 'fail';
         }
@@ -81,14 +87,10 @@ module.exports = (err, req, res, next) => {
         if (error.name === 'CastError') error = handleCastErrorDB(error); //error like- invalid id
         if (err.code === 11000) error = handleDuplicateFieldsDB(error); //error like- duplicate field
         if (err.name === 'ValidationError') error = handleValidationErrorDB(error); //error like- validation
-        // if (err.name === 'JsonWebTokenError') error = handleJWTError(); //error like- invalid token
-        // if (err.name === 'TokenExpiredError') error = handleJWTExpiredError(); //error like- token expired
+        if (err.name === 'JsonWebTokenError') error = handleJWTError(); //error like- invalid token
+        if (err.name === 'TokenExpiredError') error = handleJWTExpiredError(); //error like- token expired
         // console.log(error);
         sendErrorProd(error, req, res);
     }
-
-
-
-
 
 }

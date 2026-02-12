@@ -41,6 +41,7 @@ app.use((req, res, next) => {
     // console.log(req.method, req.url); //this will get my morgan
     req.requestTime = new Date().toLocaleString();
     console.log(req.requestTime);
+    // console.log(req.headers);
     next();
 })
 
